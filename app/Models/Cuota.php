@@ -24,11 +24,18 @@ class Cuota extends Model
         return $this->belongsTo(Prestamo::class);
     }
 
-
+    // Relación con estado de deuda
+    public function estadoDeDeuda()
+    {
+        return $this->hasMany(EstadoDeDeuda::class, 'prestamo_id');
+    }
 
     public function cliente()
-{
-    return $this->belongsTo(Cliente::class, 'cliente_id');
-} 
-
+    {
+        return $this->belongsTo(Cliente::class);
+    }
+    public function pagos()
+    {
+        return $this->hasMany(Pago::class);
+    }
 }

@@ -41,6 +41,6 @@ class StatsOverview extends BaseWidget
     // Obtener el número total de préstamos completados
     protected function getPrestamosCompletados()
     {
-        return Prestamo::where('estado', 'completado')->count();
+        return Prestamo::where('estado', 'cancelado')->count();
     }
 }

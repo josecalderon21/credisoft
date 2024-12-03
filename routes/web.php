@@ -8,6 +8,10 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\PagoController;
 
+Route::get('/login', function () {
+    return view('auth.login'); // Asegúrate de tener esta vista.
+})->name('login');
+
 Route::get('/export-users-pdf', function () {
     $users = User::all();
     

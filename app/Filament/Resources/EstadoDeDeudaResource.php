@@ -3,80 +3,75 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\EstadoDeDeudaResource\Pages;
-use App\Filament\Resources\EstadoDeDeudaResource\RelationManagers;
-use App\Models\EstadoDeDeuda;
 use App\Models\Prestamo;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\BadgeColumn;
 
 class EstadoDeDeudaResource extends Resource
 {
-    protected static ?string $model = EstadoDeDeuda::class;
+    protected static ?string $model = Prestamo::class;
+    protected static ?string $navigationLabel = 'Estado De Deudas';
+    protected static ?string $modelLabel = 'Estado De Deudas';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
     protected static ?string $navigationGroup = 'Informes';
 
-    public static function form(Form $form): Form
+    public static function form(Forms\Form $form): Forms\Form
     {
-        return $form
-            ->schema([
-                //
-            ]);
+        return $form->schema([]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                Tables\Columns\TextColumn::make('cliente.nombre')->label('Nombre'),
-                Tables\Columns\TextColumn::make('cliente.apellido')->label('Apellido'),
-                Tables\Columns\TextColumn::make('cliente.numero_documento')->label('Número de Documento'),
-                Tables\Columns\TextColumn::make('fecha_pago')->label('Fecha de Pago a Vencer'),
-                Tables\Columns\TextColumn::make('monto')->label('Monto'),
-                Tables\Columns\BadgeColumn::make('estado')
-                    ->label('Estado')
-                    ->enum(['pendiente' => 'Pendiente', 'resuelto' => 'Resuelto']),
-            ])
-            ->filters([
-                TextFilter::make('nombre')->label('Nombre'),
-                TextFilter::make('apellido')->label('Apellido'),
-                DateRangeFilter::make('fecha_pago')->label('Fecha de Pago'),
-                SelectFilter::make('estado')
-                    ->options([
-                        'pendiente' => 'Pendiente',
-                        'resuelto' => 'Resuelto',
-                    ])->label('Estado'),
-            ])
-            ->actions([
-                Tables\Actions\Action::make('export_pdf')
-                    ->label('Exportar PDF')
-                    ->action(function () {
-                        $data = Prestamo::query()->with('cliente')->get();
-                        $pdf = Pdf::loadView('pdf.estado-de-deuda', ['data' => $data]);
-                        return response()->streamDownload(fn() => print($pdf->output()), 'estado_de_deuda.pdf');
-                    }),
-            ]);
+
+        return $table->columns([
+            Tables\Columns\TextColumn::make('cliente.numero_documento')
+                ->label('CC')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('cliente.nombres')
+                ->label('Nombres')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('cliente.apellidos')
+                ->label('Apellidos')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('monto_total')
+                ->label('Deuda Inicial')->prefix('$')
+                ->formatStateUsing(fn($state) => number_format($state, 0, '', '.')),
+
+            BadgeColumn::make('saldo_pendiente')
+                ->label('Deuda Actual')
+                ->prefix('$')
+                ->formatStateUsing(fn($state) => number_format($state, 0, '', '.'))
+                ->badge(fn($record) => $record->saldo_pendiente > 0 ? 'Deuda Pendiente' : 'Deuda Pagada') // Texto que se mostrará en el badge
+                ->color(fn($record) => $record->saldo_pendiente > 0 ? 'danger' : 'success'), // Color rojo si mayor a 0, verde si igual a 0
+        ])
+
+            ->filters([/* Aquí puedes agregar filtros si es necesario */])
+            ->actions([/* Aquí puedes agregar las acciones si es necesario */])
+        ;
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListEstadoDeDeudas::route('/'),
-            'create' => Pages\CreateEstadoDeDeuda::route('/create'),
-            'edit' => Pages\EditEstadoDeDeuda::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * Método para procesar el estado de deuda.
+     */
+    public function abrirEstadoDeDeuda($record)
+    {
+        // Aquí defines la lógica para manejar los datos de las cuotas
+        // Puedes retornar los datos o procesarlos según tu necesidad.
     }
 }

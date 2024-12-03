@@ -19,12 +19,14 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Actions\Action;
 
 class CuotaResource extends Resource
 {
     protected static ?string $model = Cuota::class;
+    protected static ?string $navigationGroup = 'Informes';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-exclamation-circle';
 
     public static function form(Form $form): Form
     {
@@ -75,17 +77,15 @@ class CuotaResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('prestamo_id')
-                    ->label('ID Préstamo')
-                    ->sortable(),
-                
-                TextColumn::make('cliente.nombres')
+
+
+                TextColumn::make('prestamo.cliente.nombres')
                     ->label('Nombres')
                     ->searchable(),
-            
-                TextColumn::make('cliente.apellidos')
-                ->label('Apellidos')
-                ->searchable(),
+
+                TextColumn::make('prestamo.cliente.apellidos')
+                    ->label('Apellidos')
+                    ->searchable(),
 
                 TextColumn::make('numero_cuota')
                     ->label('Número de Cuota')
@@ -95,19 +95,10 @@ class CuotaResource extends Resource
                     ->label('Fecha de Vencimiento')
                     ->date()
                     ->sortable(),
-
-                TextColumn::make('capital')
-                    ->label('Capital')
-                    ->money('COP'),
-
-                TextColumn::make('interes')
-                    ->label('Interés')
-                    ->money('COP'),
-
                 TextColumn::make('total')
-                    ->label('Total')
-                    ->money('COP'),
-
+                    ->label('Valor')
+                    ->prefix('$')
+                    ->formatStateUsing(fn($state) => number_format($state, 0, '', '.')),
                 BadgeColumn::make('estado')
                     ->label('Estado')
                     ->colors([
@@ -122,7 +113,9 @@ class CuotaResource extends Resource
                         'pendiente' => 'Pendiente',
                         'pagada' => 'Pagada',
                     ]),
-            ]);
+
+            ])
+            ->defaultSort('fecha_vencimiento', 'asc');
     }
 
     public static function getRelations(): array
@@ -135,8 +128,8 @@ class CuotaResource extends Resource
     {
         return [
             'index' => Pages\ListCuotas::route('/'),
-            'create' => Pages\CreateCuota::route('/create'),
-            'edit' => Pages\EditCuota::route('/{record}/edit'),
+            //'create' => PagoResource\Pages\CreatePago::route('/create'),
+            //'edit' => Pages\EditCuota::route('/{record}/edit'),
         ];
     }
 }

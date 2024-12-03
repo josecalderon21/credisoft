@@ -7,7 +7,7 @@ use App\Models\Cliente;
 use App\Models\Prestamo;
 use App\Http\Controllers\PrestamoController; // Importa el controlador
 use App\Models\Cuota;
-use Filament\Pages\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf as FacadePdf;
@@ -20,7 +20,6 @@ use Filament\Notifications\Notification;
 class CreatePrestamo extends CreateRecord
 {
     protected static string $resource = PrestamoResource::class;
-
     protected function getActions(): array
     {
         return [
@@ -29,7 +28,6 @@ class CreatePrestamo extends CreateRecord
                 ->modalHeading('Detalles del Préstamo')
                 ->modalSubheading('Verifica los detalles antes de confirmar.')
                 ->modalButton('Finalizar')
-                ->visible(fn() => $this->clienteTienePrestamoActivo() === false)
                 ->form([
                     // Información del cliente
                     Forms\Components\TextInput::make('cliente')
@@ -42,19 +40,22 @@ class CreatePrestamo extends CreateRecord
                         ->default('100001') // Esto debe ser dinámico
                         ->disabled(),
 
+                    // Formatear la fecha a d/m/Y
                     Forms\Components\TextInput::make('fecha')
                         ->label('Fecha')
-                        ->default(Carbon::now()->toDateString())
+                        ->default(fn() => Carbon::now()->format('d M, Y')) // Formato de fecha
                         ->disabled(),
 
+                    // Formatear la hora a formato de 12 horas (h:i A)
                     Forms\Components\TextInput::make('hora')
                         ->label('Hora')
-                        ->default(Carbon::now()->toTimeString())
+                        ->default(fn() => Carbon::now()->format('h:i A')) // Formato de hora 12h
                         ->disabled(),
 
+                    // Formatear el monto con puntos y un signo de dólar
                     Forms\Components\TextInput::make('monto')
                         ->label('Monto Prestado')
-                        ->default(fn() => $this->form->getState()['monto'] ?? 0)
+                        ->default(fn() => '$' . number_format($this->form->getState()['monto'] ?? 0, 0, ',', '.')) // Formato de monto
                         ->disabled(),
 
                     // Mostrar tabla de cuotas generadas
@@ -72,25 +73,6 @@ class CreatePrestamo extends CreateRecord
                 ->action(function (array $data) {
                     // Obtener los datos del formulario
                     $prestamoData = $this->form->getState();
-
-
-
-                    /*    // Verificar si el cliente tiene un préstamo activo
-                     $prestamosActivos = Prestamo::where('cliente_id', $prestamoData['cliente_id'])
-                     ->where('estado', 'activo')
-                     ->count();
-
-                 if ($prestamosActivos > 0) {
-                     // Notificar en lugar de lanzar una excepción
-                     Notification::make()
-                         ->title('Advertencia')
-                         ->body('El cliente tiene un préstamo activo que debe finalizar antes de solicitar uno nuevo.')
-                         ->warning()
-                         ->send();
-
-                     return;
-                 } */
-
 
                     // Calcular los intereses generados y el monto total usando la función del controlador
                     $datosCalculados = PrestamoController::calcularInteresesYMontos(
@@ -121,6 +103,14 @@ class CreatePrestamo extends CreateRecord
                         Cuota::create($cuotaData);
                     }
 
+                    // **Actualizar el capital disponible**
+                    $capital = \App\Models\Capital::first(); // Asumiendo que hay solo un registro en la tabla capital
+                    if ($capital) {
+                        // Actualiza el capital restando el monto prestado
+                        $nuevoCapital = $capital->monto - $prestamoData['monto'];
+                        $capital->update(['monto' => $nuevoCapital]);
+                    }
+
                     // Generar el PDF sin plantilla específica
                     $pdf = FacadePdf::loadView('pdf.plantilla_prestamo', [
                         'prestamo' => $prestamo,
@@ -147,28 +137,5 @@ class CreatePrestamo extends CreateRecord
                         ->send();
                 }),
         ];
-    }
-    // Función auxiliar para verificar si el cliente tiene un préstamo activo
-    protected function clienteTienePrestamoActivo(): bool
-    {
-        $clienteId = $this->form->getState()['cliente_id'] ?? null;
-
-        if ($clienteId) {
-            $prestamosActivos = Prestamo::where('cliente_id', $clienteId)
-                ->where('estado', 'activo')
-                ->exists();
-
-            if ($prestamosActivos) {
-                // Notificar que el cliente tiene un préstamo activo
-                Notification::make()
-                    ->title('Advertencia')
-                    ->body('El cliente tiene un préstamo activo que debe finalizar antes de solicitar uno nuevo.')
-                    ->warning()
-                    ->send();
-
-                return true;
-            }
-        }
-        return false;
     }
 }

@@ -13,16 +13,14 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-
-
-
+use Illuminate\Support\Facades\Date;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-user-circle';
-    protected static ?string $navigationGroup = 'Personas';
+    protected static ?string $navigationLabel = 'Usuarios';
+    protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static ?string $navigationGroup = 'Roles y Permisos';
 
     public static function form(Form $form): Form
     {
@@ -33,12 +31,12 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->required(),
-                Forms\Components\DateTimePicker::make('email_verified_at')
-                ->required(),
-                
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->required(),
+                Forms\Components\Select::make('roles')
+                    //->multiple()
+                    ->relationship('roles', 'name'),
             ]);
     }
 
@@ -47,12 +45,16 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nombre')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email_verified_at')
+                    ->label('Verificado')
                     ->dateTime()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('roles.name')
+                    ->label('Rol'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -71,10 +73,22 @@ class UserResource extends Resource
                     ->url(route('export.users.pdf'))
                     ->openUrlInNewTab(true) // Abre el PDF en una nueva pestaña
                     ->color('success')
-                    
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('Habilitar')
+                    ->icon('heroicon-m-check-badge')
+                    ->action(function (User $user) {
+                        $user->email_verified_at = date('Y-m-d H:i:s');
+                        $user->save();
+                    }),
+                Tables\Actions\Action::make('Inhabilitar')
+                    ->icon('heroicon-m-x-circle')
+                    ->action(function (User $user) {
+                        $user->email_verified_at = null;
+                        $user->save();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

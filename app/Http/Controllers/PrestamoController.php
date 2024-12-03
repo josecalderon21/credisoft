@@ -47,28 +47,6 @@ class PrestamoController extends Controller
             'monto_total' => $datos_calculados['monto_total'],
         ]);
 
-        // Generar cuotas automáticamente después de crear el préstamo
-        $cuotas = $this->generarCuotas(
-            $prestamo->monto,
-            $prestamo->tasa_interes,
-            $prestamo->numero_cuotas,
-            $prestamo->tipo_cuota
-        );
-
-        // Guardar cada cuota en la base de datos
-        foreach ($cuotas as $cuotaData) {
-            Cuota::create([
-                'prestamo_id' => $prestamo->id,
-                'numero_cuota' => $cuotaData['numero_cuota'],
-                'fecha_vencimiento' => $cuotaData['fecha_vencimiento'],
-                'capital' => $cuotaData['capital'],
-                'interes' => $cuotaData['interes'],
-                'total' => $cuotaData['total'],
-                'estado' => 'pendiente',
-            ]);
-        }
-
-        return redirect()->route('prestamos.index')->with('success', 'Préstamo y cuotas generados con éxito');
     }
 
     // Función para calcular intereses y montos
@@ -88,48 +66,6 @@ class PrestamoController extends Controller
         ];
     }
 
-    // Método para generar cuotas basado en el tipo de cuota
-    public function generarCuotas($monto, $tasa_interes, $numero_cuotas, $tipo_cuota)
-    {
-        $cuotas = [];
-        $fechaInicial = Carbon::now();
-
-        for ($i = 1; $i <= $numero_cuotas; $i++) {
-            switch ($tipo_cuota) {
-                case 'anual':
-                    $fechaVencimiento = $fechaInicial->copy()->addYears($i);
-                    break;
-                case 'semestral':
-                    $fechaVencimiento = $fechaInicial->copy()->addMonths($i * 6);
-                    break;
-                case 'mensual':
-                    $fechaVencimiento = $fechaInicial->copy()->addMonths($i);
-                    break;
-                case 'quincenal':
-                    $fechaVencimiento = $fechaInicial->copy()->addWeeks($i * 2);
-                    break;
-                case 'diario':
-                    $fechaVencimiento = $fechaInicial->copy()->addDays($i);
-                    break;
-                default:
-                    throw new \InvalidArgumentException("Tipo de cuota no válido: $tipo_cuota");
-            }
-
-            $capital = $monto / $numero_cuotas;
-            $interes = ($capital * $tasa_interes) / 100;
-            $total = $capital + $interes;
-
-            $cuotas[] = [
-                'numero_cuota' => $i,
-                'fecha_vencimiento' => $fechaVencimiento->toDateString(),
-                'capital' => $capital,
-                'interes' => $interes,
-                'total' => $total,
-            ];
-        }
-
-        return $cuotas;
-    }
 
     // Función para exportar PDF
     public function exportarPdf()
@@ -143,4 +79,5 @@ class PrestamoController extends Controller
         // Devolver el PDF como descarga o mostrarlo en el navegador
         return $pdf->stream('lista-prestamos.pdf');
     }
+
 }

@@ -19,13 +19,21 @@ class Prestamo extends Model
         'monto_total',
         'valor_cuota',
         'pdf',
+        'estado',
 
     ];
 
+
+      
     // Relación con Cliente
     public function cliente()
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    public function capital()
+    {
+        return $this->belongsTo(Capital::class);
     }
 
     // Método para calcular los intereses generados y el monto total
@@ -76,13 +84,23 @@ public function cuotas()
 
 
 
+ // Relación con estado de deuda
+ public function estadoDeDeuda()
+ {
+     return $this->hasMany(EstadoDeDeuda::class, 'prestamo_id');
+ }
 
     // Relación con el modelo Pago
     public function pagos()
     {
         return $this->hasMany(Pago::class);
     }
-
+    
+    public function getSaldoPendiente()
+    {
+        $totalPagos = $this->pagos->sum('monto'); // Suma de pagos realizados
+        return $this->monto - $totalPagos; // Monto original menos pagos realizados
+    }
 
     public function getCuotasPendientes()
     {
@@ -97,7 +115,7 @@ public function cuotas()
     } 
 
 
-
+    
     // Método para generar cuotas y calcular el valor de cada una
     public function generarCuotas()
     {

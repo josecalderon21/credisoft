@@ -41,7 +41,11 @@ public function prestamos()
     return $this->hasMany(Prestamo::class);
 }
 
-
+// Relación con estado de deuda
+public function estadoDeDeuda()
+{
+    return $this->hasMany(EstadoDeDeuda::class, 'prestamo_id');
+}
 
 // Cliente.php
 public function pagos()

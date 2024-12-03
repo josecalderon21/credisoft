@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Pagaré del Préstamo</title>
 </head>
+
 <body>
     <h1>Detalles del Préstamo</h1>
     <p><strong>Cliente:</strong> {{ $prestamo->cliente->full_name }}</p>
@@ -22,15 +24,16 @@
         </thead>
         <tbody>
             @foreach ($cuotas as $cuota)
-                <tr>
-                    <td>{{ $cuota['numero_cuota'] }}</td>
-                    <td>{{ $cuota['fecha_vencimiento'] }}</td>
-                    <td>${{ number_format($cuota['capital'], 2) }}</td>
-                    <td>${{ number_format($cuota['interes'], 2) }}</td>
-                    <td>${{ number_format($cuota['total'], 2) }}</td>
-                </tr>
+            <tr>
+                <td>{{ $cuota['numero_cuota'] }}</td>
+                <td>{{ $cuota['fecha_vencimiento'] }}</td>
+                <td>${{ number_format($cuota['capital'], 2) }}</td>
+                <td>${{ number_format($cuota['interes'], 2) }}</td>
+                <td>${{ number_format($cuota['total'], 2) }}</td>
+            </tr>
             @endforeach
         </tbody>
     </table>
 </body>
+
 </html>

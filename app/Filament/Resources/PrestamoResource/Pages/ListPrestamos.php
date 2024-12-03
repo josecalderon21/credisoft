@@ -11,8 +11,6 @@ class ListPrestamos extends ListRecords
 {
     protected static string $resource = PrestamoResource::class;
 
-
-
     protected function getHeaderWidgets(): array
     {
         return [

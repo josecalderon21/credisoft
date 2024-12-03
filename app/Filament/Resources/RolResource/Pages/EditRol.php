@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\CajaResource\Pages;
+namespace App\Filament\Resources\RolResource\Pages;
 
-use App\Filament\Resources\CajaResource;
+use App\Filament\Resources\RolResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditCaja extends EditRecord
+class EditRol extends EditRecord
 {
-    protected static string $resource = CajaResource::class;
+    protected static string $resource = RolResource::class;
 
     protected function getHeaderActions(): array
     {
